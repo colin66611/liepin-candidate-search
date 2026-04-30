@@ -1,0 +1,26 @@
+# Claude Code artifacts
+.claude/
+.playwright-mcp/
+.spec-workflow/
+
+# Temporary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.log
+tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (agent-browser is global)
+node_modules/
