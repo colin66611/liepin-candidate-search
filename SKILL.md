@@ -20,11 +20,21 @@ description: |
 
 用户需要确保：
 1. 已安装 agent-browser：`npm install -g agent-browser` 或 `brew install agent-browser`
+   - **Windows 注意**：如果 npm 全局安装失败，可手动下载 Windows 二进制文件：
+     https://github.com/vercel-labs/agent-browser/releases
 2. Chrome 浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
 3. Chrome 以远程调试模式启动：
    ```bash
+   # macOS
    /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &
+
+   # Linux
+   google-chrome --remote-debugging-port=9222 &
+
+   # Windows (PowerShell / CMD)
+   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
    ```
+   > Windows 启动前请先完全退出 Chrome，否则 CDP 端口可能无法绑定。
 
 ## 核心定位策略
 
@@ -352,6 +362,7 @@ agent-browser --cdp 9222 eval "(function(){
 ## 错误处理
 
 - **CDP 连接失败**：提示用户检查 Chrome 是否以 `--remote-debugging-port=9222` 启动
+  - Windows 用户：请确保启动前 Chrome 已完全退出（任务管理器确认无 chrome.exe 进程）
 - **"立即沟通"按钮点击无反应**：按钮可能在视口外，先执行 `eval "window.scrollTo(0, 750)"` 滚动
 - **弹窗打开后后续操作失败**：可能是用 `eval` JS click 打开的弹窗，React 事件未正确触发。关闭弹窗后改用 `click @eN`
 - **职位下拉框无法展开**：弹窗内的 Ant Select 不在 snapshot 中，用 JS 直接操作 `.ant-select-in-form-item` 元素

@@ -17,7 +17,7 @@
 npx skills add colin66611/liepin-candidate-search
 ```
 
-这会将 skill 安装到 `~/.claude/skills/liepin-candidate-search/`，Claude Code 会自动识别。
+这会将 skill 安装到 `~/.claude/skills/liepin-candidate-search/`（macOS/Linux）或 `%USERPROFILE%\.claude\skills\liepin-candidate-search\`（Windows），Claude Code 会自动识别。
 
 ### 手动安装
 
@@ -43,14 +43,41 @@ cp -r liepin-candidate-search ~/.claude/skills/
 
 # Linux
 google-chrome --remote-debugging-port=9222 &
+
+# Windows (PowerShell / CMD)
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
 ```
 
+> **Windows 注意**：启动前先完全退出 Chrome（任务管理器确认无 chrome.exe 进程），否则 CDP 端口可能无法绑定。
+
 启动后在打开的 Chrome 中登录 https://h.liepin.com
+
+### 安装 agent-browser（Windows 特别说明）
+
+```bash
+# macOS / Linux
+npm install -g agent-browser
+
+# Windows
+npm install -g agent-browser
+# 如果 npm 全局安装失败，可手动下载 Windows 二进制文件：
+# 1. 访问 https://github.com/vercel-labs/agent-browser/releases
+# 2. 下载对应版本的 Windows x64 二进制文件
+# 3. 将文件放入 PATH 目录（如 C:\Windows\）
+```
+
+> **已知问题**：Windows 上 `npm install -g agent-browser` 可能因 PowerShell wrapper 脚本问题失败（[issue #108](https://github.com/vercel-labs/agent-browser/issues/108)）。如果安装失败，推荐：
+> - 使用 **WSL**（Windows Subsystem for Linux），与 macOS/Linux 操作一致
+> - 或手动下载二进制文件
 
 ### 环境检测
 
 ```bash
+# macOS / Linux
 bash ~/.claude/skills/liepin-candidate-search/setup.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File %USERPROFILE%\.claude\skills\liepin-candidate-search\setup.ps1
 ```
 
 一键检查 Node.js、agent-browser、Chrome CDP 是否就绪。
@@ -97,6 +124,7 @@ Agent 会依次询问：
 - 操作过程中猎聘会弹出推广弹窗，agent 会自动关闭
 - 已联系过的候选人会自动跳过
 - 建议使用 Chrome 无痕模式登录猎聘，避免 Cookie 冲突
+- **Windows 用户**：启动 CDP 模式前请确保 Chrome 完全退出，否则端口 9222 可能无法绑定
 
 ## 目录结构
 
@@ -104,7 +132,8 @@ Agent 会依次询问：
 liepin-candidate-search/
 ├── SKILL.md          # Skill 主文件（Claude Code 读取）
 ├── README.md         # 安装和使用说明
-├── setup.sh          # 环境检测脚本
+├── setup.sh          # 环境检测脚本（macOS/Linux）
+├── setup.ps1         # 环境检测脚本（Windows PowerShell）
 └── .gitignore
 ```
 
