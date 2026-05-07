@@ -22,7 +22,7 @@ description: |
 1. 已安装 agent-browser：`npm install -g agent-browser` 或 `brew install agent-browser`
    - **Windows 注意**：如果 npm 全局安装失败，可手动下载 Windows 二进制文件：
      https://github.com/vercel-labs/agent-browser/releases
-2. Chrome 或 Edge 浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
+2. Chrome（macOS/Linux）或 Edge（Windows）浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
 3. 浏览器以远程调试模式启动：
    ```bash
    # macOS
@@ -31,15 +31,10 @@ description: |
    # Linux
    google-chrome --remote-debugging-port=9222 &
 
-   # Windows - Edge（推荐，Chrome 可能有安全限制）
+   # Windows（Edge，推荐）
    "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222
-   
-   # Windows - Chrome（需配合 --user-data-dir，见下方注意事项）
-   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
    ```
-   > **Windows 重要说明**：
-   > - 启动前请先完全退出浏览器，否则 CDP 端口可能无法绑定
-   > - **Chrome M144+ 限制**：由于安全原因，Chrome 在 Windows 上要求 `--remote-debugging-port` 必须配合 `--user-data-dir` 使用，不能直接用默认 profile。推荐使用 **Edge** 浏览器，没有此限制
+   > **Windows 注意**：启动前请先完全退出 Edge（任务管理器确认无 msedge.exe 进程），否则 CDP 端口可能无法绑定。
 
 ## 核心定位策略
 
