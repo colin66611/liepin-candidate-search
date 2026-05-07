@@ -22,19 +22,16 @@ description: |
 1. 已安装 agent-browser：`npm install -g agent-browser` 或 `brew install agent-browser`
    - **Windows 注意**：如果 npm 全局安装失败，可手动下载 Windows 二进制文件：
      https://github.com/vercel-labs/agent-browser/releases
-2. Chrome（macOS/Linux）或 Edge（Windows）浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
-3. 浏览器以远程调试模式启动：
+2. Chrome 浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
+3. Chrome 以远程调试模式启动：
    ```bash
    # macOS
    /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &
 
    # Linux
    google-chrome --remote-debugging-port=9222 &
-
-   # Windows（Edge，推荐）
-   "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222
    ```
-   > **Windows 注意**：启动前请先完全退出 Edge（任务管理器确认无 msedge.exe 进程），否则 CDP 端口可能无法绑定。
+   > **Windows 注意**：Edge 会自动启动并保留登录状态，无需手动操作。
 
 ## 核心定位策略
 
@@ -99,8 +96,16 @@ agent-browser --cdp 9222 find placeholder "请选择开聊的职位" click
 
 ### 第二阶段：连接浏览器并导航
 
+**Windows：检测并自动启动 Edge**
 ```bash
-# 连接 Chrome CDP
+# 检查 9222 端口是否被 Edge 监听，如未监听则自动重启
+taskkill /F /IM msedge.exe 2>nul
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222 --user-data-dir="%LOCALAPPDATA%\Microsoft\Edge\User Data" > nul 2>&1
+timeout /t 3 /nobreak > nul
+```
+
+```bash
+# 连接 CDP
 agent-browser connect 9222
 
 # 导航到搜索页面
