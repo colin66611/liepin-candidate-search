@@ -22,8 +22,8 @@ description: |
 1. 已安装 agent-browser：`npm install -g agent-browser` 或 `brew install agent-browser`
    - **Windows 注意**：如果 npm 全局安装失败，可手动下载 Windows 二进制文件：
      https://github.com/vercel-labs/agent-browser/releases
-2. Chrome 浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
-3. Chrome 以远程调试模式启动：
+2. Chrome 或 Edge 浏览器已启动，且已登录猎聘账号（`h.liepin.com`）
+3. 浏览器以远程调试模式启动：
    ```bash
    # macOS
    /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &
@@ -31,10 +31,15 @@ description: |
    # Linux
    google-chrome --remote-debugging-port=9222 &
 
-   # Windows (PowerShell / CMD)
-   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
+   # Windows - Edge（推荐，Chrome 可能有安全限制）
+   "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222
+   
+   # Windows - Chrome（需配合 --user-data-dir，见下方注意事项）
+   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
    ```
-   > Windows 启动前请先完全退出 Chrome，否则 CDP 端口可能无法绑定。
+   > **Windows 重要说明**：
+   > - 启动前请先完全退出浏览器，否则 CDP 端口可能无法绑定
+   > - **Chrome M144+ 限制**：由于安全原因，Chrome 在 Windows 上要求 `--remote-debugging-port` 必须配合 `--user-data-dir` 使用，不能直接用默认 profile。推荐使用 **Edge** 浏览器，没有此限制
 
 ## 核心定位策略
 
@@ -101,7 +106,7 @@ agent-browser --cdp 9222 find placeholder "请选择开聊的职位" click
 
 ```bash
 # 连接 Chrome CDP
-agent-browser --cdp 9222 connect
+agent-browser connect 9222
 
 # 导航到搜索页面
 agent-browser --cdp 9222 goto https://h.liepin.com/search/getConditionItem
@@ -197,10 +202,16 @@ agent-browser --cdp 9222 wait 1500
 
 **Step 4：在弹窗中选择职位**
 
-弹窗中的 Ant Design Select 不在 snapshot 中。用 JS 操作：
+⚠️ **重要警告**：弹窗打开后 snapshot 会包含整个页面（弹窗 + 背景搜索页）。
+**绝对不能**用 ref 点击职位选择，因为 ref 可能指向左侧职位列表的卡片（如 `@e45`），不是弹窗内的选项。
+
+**正确方法**：必须用 JS 操作 Ant Design Select 的 DOM 元素。
 
 ```bash
-# 方法A：点击 Select 展开下拉，然后点击选项（推荐）
+# ❌ 错误做法（会导致选择失败）：
+# agent-browser --cdp 9222 click @e45  # 这是左侧职位列表，不是弹窗选项！
+
+# ✅ 正确方法A：点击 Select 展开下拉，然后点击选项（推荐）
 agent-browser --cdp 9222 eval "(function(){
   const modal = document.querySelector('.ant-modal');
   if(!modal) return 'no modal';
@@ -293,7 +304,7 @@ agent-browser --cdp 9222 wait 500
 
 | 操作 | 命令 |
 |------|------|
-| 连接 CDP | `agent-browser --cdp 9222 connect` |
+| 连接 CDP | `agent-browser connect 9222` 或 `agent-browser connect http://localhost:9222` |
 | 导航 | `agent-browser --cdp 9222 goto <url>` |
 | 快照 | `agent-browser --cdp 9222 snapshot -i` |
 | 按文本点击 | `agent-browser --cdp 9222 find text "文本" click` |
@@ -321,12 +332,16 @@ agent-browser --cdp 9222 wait 2000
 
 猎聘的"请选择职位开聊"弹窗是 Ant Design Modal 组件。
 
+⚠️ **关键陷阱**：弹窗打开后 snapshot 会包含整个页面（弹窗 + 背景搜索页）。
+- snapshot 中的职位 ref（如 `@e45`）可能是左侧职位列表的卡片，**不是弹窗内的职位选项**
+- **必须用 JS 操作弹窗内的下拉框**，不能用 ref 点击职位选择
+
 **弹窗定位策略**：
 
 | 步骤 | 方法 | 说明 |
 |------|------|------|
 | 打开弹窗 | `click @eN`（"立即沟通"按钮ref） | agent-browser 原生点击 |
-| 展开下拉 | JS dispatch mousedown+click on `.ant-select-in-form-item` | 弹窗内元素不在 snapshot 中 |
+| 展开下拉 | JS dispatch mousedown+click on `.ant-select-in-form-item` | **不能用 ref，必须用 JS** |
 | 选择职位 | JS click on `.ant-select-item-option` | 在 `.ant-select-dropdown` 中找到选项 |
 | 发送消息 | `click @eN`（"立即开聊"按钮ref） | 该按钮在 snapshot 中可见 |
 | 验证成功 | snapshot 检查按钮变为"继续沟通" | 按钮文字变化 = 打招呼成功 |
@@ -365,8 +380,11 @@ agent-browser --cdp 9222 eval "(function(){
   - Windows 用户：请确保启动前 Chrome 已完全退出（任务管理器确认无 chrome.exe 进程）
 - **"立即沟通"按钮点击无反应**：按钮可能在视口外，先执行 `eval "window.scrollTo(0, 750)"` 滚动
 - **弹窗打开后后续操作失败**：可能是用 `eval` JS click 打开的弹窗，React 事件未正确触发。关闭弹窗后改用 `click @eN`
-- **职位下拉框无法展开**：弹窗内的 Ant Select 不在 snapshot 中，用 JS 直接操作 `.ant-select-in-form-item` 元素
-- **选择职位后"立即开聊"仍提示选择职位**：确认 JS 点击的是 `.ant-select-item-option` 元素（在 `.ant-select-dropdown` 中），不是页面背景元素
+- **职位下拉框无法展开**：弹窗内的 Ant Select **不能用 ref 点击**（ref 可能指向左侧职位列表），必须用 JS 操作 `.ant-select-in-form-item`
+- **选择职位后"立即开聊"仍提示选择职位**：
+  - ⚠️ **最常见错误**：点击了 snapshot 中的职位 ref（如 `@e45`），但这是左侧职位列表卡片，不是弹窗内的职位选项
+  - **解决方法**：必须用 JS eval 操作 DOM（见 Step 4 的正确方法）
+  - 确认 JS 点击的是 `.ant-select-item-option` 元素（在 `.ant-select-dropdown` 中）
 - **验证打招呼是否成功**：检查候选人 cell 中按钮文字从"立即沟通"变为"继续沟通"
 - **操作被反爬拦截**：降低操作频率，增加等待时间到 3-5 秒
 - **筛选项 LabelText 找不到**：运行 `snapshot -i` 查看实际页面结构，确认文本是否完全匹配

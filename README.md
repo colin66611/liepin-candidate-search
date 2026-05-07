@@ -32,10 +32,10 @@ cp -r liepin-candidate-search ~/.claude/skills/
 |------|------|
 | **Node.js** (>=18) | 运行 agent-browser |
 | **agent-browser** | 浏览器自动化 CLI，`npm install -g agent-browser` |
-| **Google Chrome** | 需要以 CDP 模式启动 |
+| **Google Chrome / Microsoft Edge** | 需要以 CDP 模式启动（Windows 推荐 Edge） |
 | **猎聘账号** | 需要在 h.liepin.com 登录 |
 
-### 启动 Chrome（CDP 模式）
+### 启动浏览器（CDP 模式）
 
 ```bash
 # macOS
@@ -44,13 +44,18 @@ cp -r liepin-candidate-search ~/.claude/skills/
 # Linux
 google-chrome --remote-debugging-port=9222 &
 
-# Windows (PowerShell / CMD)
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
+# Windows - Edge（推荐，无安全限制）
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222
+
+# Windows - Chrome（需指定 user-data-dir）
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
 ```
 
-> **Windows 注意**：启动前先完全退出 Chrome（任务管理器确认无 chrome.exe 进程），否则 CDP 端口可能无法绑定。
+> **Windows 重要说明**：
+> 1. 启动前先完全退出浏览器（任务管理器确认无 chrome.exe/msedge.exe 进程），否则 CDP 端口可能无法绑定
+> 2. **Chrome M144+ 安全限制**：Windows 上 Chrome 要求 `--remote-debugging-port` 必须配合 `--user-data-dir` 使用，不能直接用默认 profile。推荐使用 **Edge** 浏览器，没有此限制
 
-启动后在打开的 Chrome 中登录 https://h.liepin.com
+启动后在打开的浏览器中登录 https://h.liepin.com
 
 ### 安装 agent-browser（Windows 特别说明）
 
